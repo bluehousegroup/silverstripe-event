@@ -1,4 +1,4 @@
-Silverstripe Events
+Silverstripe Event
 =====================
 A module for managing calendar(s) and related events.
 
