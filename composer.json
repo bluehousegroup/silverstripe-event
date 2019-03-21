@@ -1,0 +1,33 @@
+{
+    "name": "bluehousegroup/silverstripe-event",
+    "description": "A module for managing events",
+    "homepage": "http://github.com/bluehousegroup/silverstripe-event",
+    "keywords": ["silverstripe", "event", "calendar"],
+    "license": "BSD-3-Clause",
+    "authors": [
+      {"name": "Mat Gilbert","email": "mat@bluehousegroup.com"},
+      {"name": "Andrew Rousseau","email": "andrew@bluehousegroup.com"},
+      {"name": "Isaiah Keepin","email": "isaiah@bluehousegroup.com"},
+      {"name": "Jared Fullerton","email": "jared@bluehousegroup.com"},
+      {"name": "Joe Siebert","email": "joe@bluehousegroup.com"},
+      {"name": "Austin Whipple","email": "austin@bluehousegroup.com"}
+    ],
+    "support": {
+      "issues": "http://github.com/bluehousegroup/silverstripe-event/issues"
+    },
+    "require": {
+      "silverstripe/cms": "^4",
+      "silverstripe/framework": "^4"
+    },
+    "autoload": {
+      "psr-4": {
+          "BluehouseGroup\\EventModule\\": "src/"
+      }
+    },
+    "extra": {
+      "installer-name": "silverstripe-event",
+      "expose": [
+          "client"
+      ]
+    }
+  }
