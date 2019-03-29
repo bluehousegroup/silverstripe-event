@@ -10,6 +10,10 @@ use SilverStripe\Forms\DateField;
 use SilverStripe\Forms\TimeField;
 use SilverStripe\Forms\CheckboxField;
 use SilverStripe\Versioned\Versioned;
+use SilverStripe\Forms\Tab;
+use SilverStripe\Forms\TabSet;
+use SilverStripe\Control\Director;
+use SilverStripe\Control\Controller;
 
 
 class EventDateTime extends DataObject
@@ -32,11 +36,21 @@ class EventDateTime extends DataObject
 	];
 
 	private static $defaults = [
-		'StartDate' => "",
+		'StartDate' => '',
 		'StartTime' => '',
 		'EndDate' => '',
 		'EndTime' => ''
 	];
+
+	public function populateDefaults() 
+	{
+		$today = date('m/d/Y');
+		$this->StartDate = $today;
+		$this->EndDate = $today;
+		$this->StartTime = '3:00 PM';
+		$this->EndTime = '4:00 PM';
+		parent::populateDefaults();
+	}
 
 	public function  validate(){
 
@@ -49,15 +63,34 @@ class EventDateTime extends DataObject
 				$result->addError('Invalid Time Range: You must select an End Time after Start Time');
 				return $result;
 			}
-		}		
-		
+		}
+
 		if($this->EndDate){
 			$startDate = date($this->StartDate);
 			$endDate = date($this->EndDate);
 			if($endDate < $startDate){
 				$result->addError('Invalid Date Range: You must select an End Date after Start Date');
 			}
-		} 
+		}
+
+		$filter = [
+			'EventID' => $this->ID,
+			'StartDate' => $this->StartDate
+		];
+
+		if($this->StartTime) $filter['StartTime'] = $this->StartTime;
+		else $filter['AllDay'] = 1;
+		$existingDT = EventDateTime::get()->filter($filter);
+
+		//$eventDateTimes = $this->Event->EventDateTimes();
+		//$existingDT = $this->Event->EventDateTimes()->filter($filter);
+		//var_dump($eventDateTimes);
+		//die();
+		
+		if(sizeof($existingDT) > 0) $result->addError('Conflict with existing Occurrence, please choose another Date and Time');
+
+		//$result->addError('Conflict with existing Occurrence - Number: ' . sizeof($existingDT));
+
 
 		return $result;
 
@@ -71,22 +104,47 @@ class EventDateTime extends DataObject
 	{
 		return $this->StartDate . ' ' . $this->StartTime;
 	}
-	
+
 	public function forTemplate()
 	{
 		return $this->getTitle();
 	}
 
+	public function Link($action = null)
+	{
+
+		$eventURLSegment = $this->Event->URLSegment;
+
+		//die('test: ' . $eventURLSegment);
+
+		$controller = CalendarPage::get()->filter(['ID' => $this->Event->CalendarID])->first();
+		$link = Controller::join_links(Director::baseURL(), $controller->Link('event'), '/' . $this->Event->URLSegment);
+
+		$link .= '/' . $this->StartDate;
+
+		if($this->StartTime != NULL){
+		$dateString = strtotime($this->StartDate . ' ' . $this->StartTime);
+		$link .= '/' . date('Hi', $dateString);
+		}
+		// var_dump($link);
+		// die();
+		return $link;
+	}	
+
 	public function getCMSFields()
 	{
-		$fields = FieldList::create([
-			DateField::create('StartDate',_t(__CLASS__ . '.STARTDATE', 'Start Date')),
-			TimeField::create('StartTime',_t(__CLASS__ . '.STARTTIME', 'Start Time')),
-			DateField::create('EndDate',_t(__CLASS__ . '.ENDDATE', 'End Date')),
-			TimeField::create('EndTime',_t(__CLASS__ . '.STARTTIME', 'End Time')),
-			CheckboxField::create('AllDay',_t(__CLASS__ . '.ALLDAY', 'All Day Event?')),	
-		]
+		$fields = FieldList::create(
+			TabSet::create('Root',
+				Tab::create('Main',
+					CheckboxField::create('AllDay',_t(__CLASS__ . '.ALLDAY', 'All Day Event?')),
+					DateField::create('StartDate',_t(__CLASS__ . '.STARTDATE', 'Start Date')),
+					TimeField::create('StartTime',_t(__CLASS__ . '.STARTTIME', 'Start Time')),
+					DateField::create('EndDate',_t(__CLASS__ . '.ENDDATE', 'End Date')),
+					TimeField::create('EndTime',_t(__CLASS__ . '.STARTTIME', 'End Time'))
+				))
 		);
+
+		$this->updateCMSFields($fields);
 
 		return $fields;
 	}
@@ -97,5 +155,5 @@ class EventDateTime extends DataObject
 			'StartDate',
 			'StartTime'
 		]);
-	}	
+	}
 }

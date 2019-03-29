@@ -2,17 +2,25 @@
 
 namespace BluehouseGroup\Event;
 
+use SilverStripe\Core\Extensible;
 use SilverStripe\Forms\FieldList;
+use SilverStripe\Forms\GridField\GridField;
+use SilverStripe\Forms\GridField\GridFieldAddExistingAutocompleter;
+use SilverStripe\Forms\GridField\GridFieldConfig;
+use SilverStripe\Forms\GridField\GridFieldConfig_RelationEditor;
+use SilverStripe\Forms\GridField\GridFieldDataColumns;
 use SilverStripe\Forms\Tab;
 use SilverStripe\Forms\TabSet;
-use SilverStripe\Forms\TextField;
 use SilverStripe\Forms\TextAreaField;
-use SilverStripe\Forms\GridField\GridField;
-use SilverStripe\Forms\GridField\GridFieldConfig;
-use SilverStripe\Forms\GridField\GridFieldDataColumns;
-use SilverStripe\Forms\GridField\GridFieldConfig_RelationEditor;
+use SilverStripe\Forms\TextField;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\Versioned\Versioned;
+use SilverStripe\CMS\Forms\SiteTreeURLSegmentField;
+use SilverStripe\Core\Config\Config;
+use SilverStripe\Control\Director;
+use SilverStripe\Control\Controller;
+use SilverStripe\Forms\HTMLEditor\HTMLEditorField;
+use SilverStripe\View\Parsers\URLSegmentFilter;
 
 class Event extends DataObject
 {
@@ -24,7 +32,8 @@ class Event extends DataObject
 
 	private static $db = [
 		'Title' => 'Varchar(255)',
-		'Description' => 'Text'
+		'Description' => 'HTMLText',
+		'URLSegment' => 'Varchar(63)'
 	];
 
 	private static $has_many = [
@@ -33,7 +42,7 @@ class Event extends DataObject
 
 	private static $has_one = [
 		'Calendar' => CalendarPage::class,
-	];	
+	];
 
 	private static $summary_fields = [
 		'Title' => 'Title',
@@ -53,15 +62,119 @@ class Event extends DataObject
 		])->first();
 
 		return $date;
-		
-		//TODO: Why didn't this work?
-		// return $date->StartDate . ' ' . $date->StartTime;
+	}
 
+	public function getDateTime($date, $time) {
+		if (!$time) {
+			return $this->EventDateTimes()->filter(['StartDate' => date('m-d-Y',strtotime($date)), 'AllDay' => true])->first();
+		}
+
+		return $this->EventDateTimes()->filter(['StartDate' => date('m-d-Y',strtotime($date)), 'StartTime' => date('His', strtotime($time))])->first();
 	}
 
 	public function getResources()
 	{
 		return Resource::getByResourceType($this->SharePointTag);
+	}
+
+	public function getURLSegment()
+	{
+		if(!isset($this->URLSegment)){
+			return 'no-segment';
+		} else {
+			//krumo($this);
+			//var_dump($this->URLSegment);
+			//return 'this-is-broken';
+			return $this->URLSegment;
+		}
+	}	
+
+    public function onBeforeWrite()
+    {
+        parent::onBeforeWrite();
+
+        // If there is no URLSegment set, generate one from Title
+        $isDefaultSegment = stripos($this->owner->URLSegment, $this->owner->singular_name()) === 0;
+        if ((!$this->owner->URLSegment || $isDefaultSegment) && $this->URLSegmentTitle()) {
+            $this->owner->URLSegment = $this->generateURLSegment($this->URLSegmentTitle());
+        } elseif ($this->owner->isChanged('URLSegment', 2)) {
+            // Do a strict check on change level, to avoid double encoding caused by
+            // bogus changes through forceChange()
+            $filter = URLSegmentFilter::create();
+            $this->owner->URLSegment = $filter->filter($this->owner->URLSegment);
+            // If after sanitising there is no URLSegment, give it a reasonable default
+            if (!$this->owner->URLSegment) {
+                $this->owner->URLSegment = $this->owner->singular_name() . "-" . $this->owner->ID;
+            }
+        }
+
+        // Ensure that this object has a non-conflicting URLSegment value.
+        $count = 2;
+        while (!$this->validURLSegment()) {
+            $this->owner->URLSegment = preg_replace('/-[0-9]+$/', null, $this->owner->URLSegment) . '-' . $count;
+            $count++;
+        }
+    }
+
+    public function generateURLSegment($title)
+    {
+        $filter = URLSegmentFilter::create();
+        $filteredTitle = $filter->filter($title);
+
+        // Fallback to generic page name if path is empty (= no valid, convertable characters)
+        if (!$filteredTitle || $filteredTitle == '-' || $filteredTitle == '-1') {
+            $filteredTitle = $this->owner->singular_name() . "-" . $this->owner->ID;
+        }
+
+        // Hook for extensions
+        $this->extend('updateURLSegment', $filteredTitle, $title);
+
+        return $filteredTitle;
+	}
+	
+    public function validURLSegment()
+    {
+        // Check for clashing pages by url, id, and parent
+        $class_name = $this->owner->getClassName();
+        $source = $class_name::get()->filter([
+            'URLSegment' => $this->owner->URLSegment
+        ]);
+        if ($this->owner->ID) {
+            $source = $source->exclude('ID', $this->owner->ID);
+        }
+
+        return !$source->exists();
+	}
+	
+    // attribute to use for url segments
+    // defaults to Title but may be overridden in the specific classes
+    public function URLSegmentTitle()
+    {
+        $title = $this->owner->Title;
+
+        $this->extend('updateURLSegmentTitle', $title);
+
+        return $title;
+    }	
+
+	/**
+	 * Return the link for this object, with the {@link Director::baseURL()} included.
+	 *
+	 * @param string $action optional additional url parameters
+	 * @return string
+	 */
+	public function Link($action = null)
+	{
+		$controller = CalendarPage::get()->filter(['ID' => $this->CalendarID])->first();
+		$link = Controller::join_links(Director::baseURL(), $controller->Link('event'), '/' . $this->URLSegment);
+		return $link;
+	}
+
+	public function BaseLink()
+	{
+		$controller = CalendarPage::get()->filter(['ID' => $this->CalendarID])->first();
+		$link = Director::absoluteURL(Controller::join_links(Director::baseURL(), $controller->Link('event'), '/'));
+		return $link;
 	}
 
 	public function getCMSFields()
@@ -70,7 +183,11 @@ class Event extends DataObject
 			TabSet::create('Root',
 				Tab::create('Main',
 					TextField::create('Title',_t(__CLASS__ . '.TITLE', 'Title')),
-					TextAreaField::create('Description',_t(__CLASS__ . '.DESCRIPTION', 'Description')),
+					SiteTreeURLSegmentField::create(
+						'URLSegment',
+						'URL Segment'
+					)->setURLPrefix($this->BaseLink()),
+					HTMLEditorField::create('Description',_t(__CLASS__ . '.DESCRIPTION', 'Description')),
 					GridField::create(
 						'EventDateTimes',
 						_t(__CLASS__ . '.EventDateTimes', 'Occurrences'),
@@ -88,9 +205,14 @@ class Event extends DataObject
 			'StartTime.nice' => 'Start Time',
 			'EndDate.nice' => 'End Date',
 			'EndTime.nice' => 'End Time',
-			'AllDay.nice' => 'All Day'		
+			'AllDay.nice' => 'All Day'
 		]);
 
+		$event_date_times_config->removeComponentsByType(
+			GridFieldAddExistingAutocompleter::class
+		);
+
+		$this->updateCMSFields($fields);
 
 		return $fields;
 	}

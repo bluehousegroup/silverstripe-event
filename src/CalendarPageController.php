@@ -25,7 +25,8 @@ class CalendarPageController extends PageController
     ];
 
     private static $url_handlers = [
-        'event//$Id' => 'viewEvent',
+        'event//$URLSegment!/$Date!/$Time' => 'viewOccurence',
+        'event//$URLSegment!' => 'viewEvent',
         'date//$Year!/$Month/$Day' => 'handleDateSegments',
         'range//$Start!/$End' => 'handleDateRange',
         'search//$Query!' => 'handleSearch',
@@ -35,22 +36,65 @@ class CalendarPageController extends PageController
 
     public function handleSearch(HTTPRequest $r){
         $query = $r->param('Query');
-        $matchingEvents = $this->searchEvents($query);
 
-        
+        $get_vars = $r->getVars();
+        $start_date = $get_vars['StartDate'];
+        $end_date = $get_vars['EndDate'];
+
+        $matchingEvents = $this->searchEvents($query, $start_date, $end_date);
 
         return $this->customise([
             'EventDateTimes' => $this->searchEvents($query),
             'SearchTerm' => $query
-        ])->renderWith(['CalendarPage', 'Page']);      
+        ])->renderWith(['CalendarPage', 'Page']);
+    }
+
+    public function viewOccurence(HTTPRequest $r){
+        $url_segment = $r->param('URLSegment');
+        $date = $r->param('Date');
+        $time = $r->param('Time');
+
+        $event = $this->getEventByURLSegment($url_segment);
+        if (!$event) {
+            return $this->httpError(404, 'Event not found');
+        }
+
+        //TODO: Is this even working yet?
+        $event_datetime = $event->getDateTime($date, $time);
+        if (!$event_datetime) {
+            return $this->httpError(404, 'Event datetime not found');
+        }
+
+        return $this->customise([
+            'EventDateTime' => $event_datetime
+        ])->renderWith(['EventViewPage', 'Page']);
     }
 
     public function viewEvent(HTTPRequest $r){
-        $eventID = $r->param('Id');
-        return $this->customise([
-            'Event' => $this->getEvent($eventID)
-        ])->renderWith(['EventViewPage', 'Page']);        
+        $get_vars = $r->getVars();
+        $url_segment = $r->param('URLSegment');
+        $date = $date_times = null;
+        $event = $this->getEventByURLSegment($url_segment);
 
+        if (!$event) {
+            return $this->httpError(404, 'Event not found');
+        }
+
+        if (isset($get_vars['date'])) {
+          $date = $get_vars['date'];
+          $date_times = $event->getDateTimes($date);
+
+          if (empty($date_times->toArray())) {
+              echo "<pre>"; print_r($date_times->toArray()); die();
+              $date = null;
+          }
+        }
+
+        return $this->customise([
+            'Event' => $event,
+            'Date' => $date,
+            'DateTimes' => $date_times
+        ])->renderWith(['EventViewPage', 'Page']);
     }
 
     public function handlePeriod(HTTPRequest $r){
@@ -63,8 +107,9 @@ class CalendarPageController extends PageController
 
         return $this->customise([
             'EventDateTimes' => $this->getEventDateTimes($Period),
-            'SearchTerm' => $Period
-        ])->renderWith(['CalendarPage', 'Page']);        
+            'SearchTerm' => $Period, 
+            'DefaultDateHeader' => 'Events for this ' . $Period
+        ])->renderWith(['CalendarPage', 'Page']);
 
     }
 
@@ -91,7 +136,7 @@ class CalendarPageController extends PageController
 
         return $this->customise([
             'EventDateTimes' => $this->getEventDateTimes($rangeFilter)
-        ])->renderWith(['CalendarPage', 'Page']);               
+        ])->renderWith(['CalendarPage', 'Page']);
 
     }
 
@@ -107,19 +152,19 @@ class CalendarPageController extends PageController
                 return $this->httpError(404, 'Invalid year format for search params');
             }
             $rangeFilter['Year'] = $params['Year'];
-        } 
-       
+        }
+
         if ($params['Month']){
             if(preg_match($dateMonthRegex, $params['Month']) == 0){
                 return $this->httpError(404, 'Invalid month format for search params');
-            }            
+            }
             $rangeFilter['Month'] = $params['Month'];
         }
-        
+
         if ($params['Day']){
             if(preg_match($dateMonthRegex, $params['Month']) == 0){
                 return $this->httpError(404, 'Invalid day format for search params');
-            }               
+            }
             $rangeFilter['Day'] = $params['Day'];
         }
 

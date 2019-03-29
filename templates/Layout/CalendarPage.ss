@@ -9,8 +9,8 @@
 <hr/>
 <% if $EventDateTimes %>
 <% loop $EventDateTimes %>
-    
-    <a href="{$Up.Link}event/{$Event.ID}">
+
+    <a href="$Event.Link">
     <h4>$StartDate.nice</h4>
     <p>
         <small>$StartTime.nice <% if $EndTime %> - $EndTime.nice<% end_if %></small>
@@ -20,9 +20,9 @@
 
     <% if not $AllDay == 0 %>
     <p>End Time: $AllDay </p>
-    
-    <% end_if %>    
-    
+
+    <% end_if %>
+
     </a>
     <% if not Last %>
     <hr/>
@@ -36,7 +36,7 @@
         <p>No events found for "$SearchTerm"</p>
     <% else %>
         <p>No events scheduled yet</p>
-    
+
     <% end_if %>
 
 <% end_if %>

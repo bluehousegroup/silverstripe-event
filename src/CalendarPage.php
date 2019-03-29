@@ -38,35 +38,43 @@ class CalendarPage extends SiteTree
 		'DefaultView' => 'upcoming'
 	];
 
-    private static $has_many = [
-        'Events' => Event::class
+  private static $has_many = [
+		'Events' => Event::class
 	];
 
-	public function searchEvents($query){
+	public function searchEvents($query, $start_date = null, $end_date = null){
 		//TODO: Is more validation against the search term required?
-		//TODO: Usually unsafe to trust user input that gets put into SQL, how "safe" is this ORM usage?
-		$eventIDs = $this->Events()->filterAny([
+
+		$event_ids = $this->Events()->filterAny([
 			'Title:PartialMatch' => $query,
 			'Description:PartialMatch' => $query
 		])->map('ID', 'ID')->toArray();
 
-		if(!empty($eventIDs)){
-			return EventDateTime::get()->filter(['EventID' => $eventIDs])->sort(['StartDate' => 'ASC', 'StartTime' => 'ASC']);
+		if (!empty($event_ids)) {
+			$filters = ['EventID' => $event_ids, 'StartDate:GreaterThanOrEqual' => date('Y-m-d')];
+
+			if ($start_date) {
+				$filters['StartDate:GreaterThanOrEqual'] = date('Y-m-d', strtotime($start_date));
+			}
+
+			if ($end_date) {
+				$filters['EndDate:LessThanOrEqual'] = date('Y-m-d', strtotime($end_date));
+			}
+
+			return EventDateTime::get()->filter($filters)->sort(['StartDate' => 'ASC', 'StartTime' => 'ASC']);
 		} else {
 			return false;
 		}
 	}
 
-	//TODO: Is this even necessary? Not currently working.
-	// public function getContent(){
-	// 	krumo($this);
-	// 	return $this->Content;
-	// }
-
 	public function getEvent($id){
 		return Event::get()->byId($id);
 	}
-	
+
+	public function getEventByURLSegment($url_segment){
+		return Event::get()->filter(['URLSegment' => $url_segment])->first();
+	}
+
 	public function getEventDateTimes($filter = false){
 		$eventIDs = $this->Events()->map('ID', 'ID')->toArray();
 
