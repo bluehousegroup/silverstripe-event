@@ -118,7 +118,7 @@ class EventDateTime extends DataObject
 
 		$link .= '/' . $this->StartDate;
 
-		if($this->StartTime != NULL){
+		if($this->AllDay == 0){
 		$dateString = strtotime($this->StartDate . ' ' . $this->StartTime);
 			$link .= '/' . date('Hi', $dateString);
 		}
