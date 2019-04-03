@@ -176,8 +176,21 @@ class CalendarPageController extends PageController
             $rangeFilter['Day'] = $params['Day'];
         }
 
+        $dateHeader = 'Viewing Events for ';
+            
+        if($params['Day'] && $params['Month']){
+                $dateString = $params['Year'] . '-' . $params['Month'] . '-' . $params['Day'];
+                $dateHeader .= date('F j', strtotime($dateString)) . ', ';
+        } else {
+                $dateString = $params['Year'] . '-' . $params['Month'];
+                $dateHeader .= date('F ', strtotime($dateString));
+        }
+        
+        $dateHeader .= ' ' . $params['Year'];
+
         return $this->customise([
-            'EventDateTimes' => $this->getEventDateTimes($rangeFilter)
+            'EventDateTimes' => $this->getEventDateTimes($rangeFilter),
+            'DefaultDateHeader' => $dateHeader
         ])->renderWith(['CalendarPage', 'Page']);
 
     }
