@@ -46,7 +46,8 @@ class Event extends DataObject
 
 	private static $summary_fields = [
 		'Title' => 'Title',
-		'StartTimeSummary' => 'Event Date/Time'
+		'StartTimeSummary' => 'Event Date/Time',
+		'URLSegment' => 'URLSegment'
 	];
 
 	private static $searchable_fields = [
@@ -65,29 +66,24 @@ class Event extends DataObject
 	}
 
 	public function getDateTime($date, $time) {
-		if (!$time) {
-			return $this->EventDateTimes()->filter(['StartDate' => date('m-d-Y',strtotime($date)), 'AllDay' => true])->first();
+		if ($time == NULL) {
+			return $this->EventDateTimes()->filter([
+				'StartDate' => date('Y-m-d',strtotime($date)), 
+				'AllDay' => true])->first();
 		}
 
-		return $this->EventDateTimes()->filter(['StartDate' => date('m-d-Y',strtotime($date)), 'StartTime' => date('His', strtotime($time))])->first();
+		$dateTimes = $this->EventDateTimes();
+		$dateTime = $dateTimes->filter([
+			'StartDate' => date('Y-m-d',strtotime($date)), 
+			'StartTime' => $time])->first();
+
+		return $dateTime;
 	}
 
 	public function getResources()
 	{
 		return Resource::getByResourceType($this->SharePointTag);
 	}
-
-	public function getURLSegment()
-	{
-		if(!isset($this->URLSegment)){
-			return 'no-segment';
-		} else {
-			//krumo($this);
-			//var_dump($this->URLSegment);
-			//return 'this-is-broken';
-			return $this->URLSegment;
-		}
-	}	
 
     public function onBeforeWrite()
     {

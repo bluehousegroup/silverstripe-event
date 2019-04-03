@@ -87,10 +87,10 @@ class EventDateTime extends DataObject
 		//var_dump($eventDateTimes);
 		//die();
 		
-		if(sizeof($existingDT) > 0) $result->addError('Conflict with existing Occurrence, please choose another Date and Time');
+		//if(sizeof($existingDT) > 0) $result->addError('Conflict with existing Occurrence, please choose another Date and Time');
 
 		//$result->addError('Conflict with existing Occurrence - Number: ' . sizeof($existingDT));
-
+		
 
 		return $result;
 
@@ -113,10 +113,6 @@ class EventDateTime extends DataObject
 	public function Link($action = null)
 	{
 
-		$eventURLSegment = $this->Event->URLSegment;
-
-		//die('test: ' . $eventURLSegment);
-
 		$controller = CalendarPage::get()->filter(['ID' => $this->Event->CalendarID])->first();
 		$link = Controller::join_links(Director::baseURL(), $controller->Link('event'), '/' . $this->Event->URLSegment);
 
@@ -124,10 +120,8 @@ class EventDateTime extends DataObject
 
 		if($this->StartTime != NULL){
 		$dateString = strtotime($this->StartDate . ' ' . $this->StartTime);
-		$link .= '/' . date('Hi', $dateString);
+			$link .= '/' . date('Hi', $dateString);
 		}
-		// var_dump($link);
-		// die();
 		return $link;
 	}	
 

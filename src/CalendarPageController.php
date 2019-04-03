@@ -21,12 +21,14 @@ class CalendarPageController extends PageController
         'handleDateSegments',
         'handleDateRange',
         'handleSearch',
-        'viewEvent'
+        'viewEvent',
+        'viewOccurence'
     ];
 
     private static $url_handlers = [
-        'event//$URLSegment!/$Date!/$Time' => 'viewOccurence',
-        'event//$URLSegment!' => 'viewEvent',
+        'event//$URLSegment/$Date/$Time' => 'viewOccurence',
+        'event//$URLSegment/$Date' => 'viewOccurence',
+        'event//$URLSegment' => 'viewEvent',
         'date//$Year!/$Month/$Day' => 'handleDateSegments',
         'range//$Start!/$End' => 'handleDateRange',
         'search//$Query!' => 'handleSearch',
@@ -59,13 +61,19 @@ class CalendarPageController extends PageController
             return $this->httpError(404, 'Event not found');
         }
 
-        //TODO: Is this even working yet?
-        $event_datetime = $event->getDateTime($date, $time);
+        $urlTime = NULL;
+        if($time != NULL){
+            $urlTime = substr($time, 0, 2) . ':' . substr($time, 2, 2) . ':00';
+        }
+
+        $event_datetime = $event->getDateTime($date, $urlTime);
+
         if (!$event_datetime) {
             return $this->httpError(404, 'Event datetime not found');
         }
 
         return $this->customise([
+            'Event' => $event,
             'EventDateTime' => $event_datetime
         ])->renderWith(['EventViewPage', 'Page']);
     }
