@@ -30,12 +30,13 @@ class CalendarPageController extends PageController
         'event//$URLSegment/$Date' => 'viewOccurence',
         'event//$URLSegment' => 'viewEvent',
         'date//$Year!/$Month/$Day' => 'handleDateSegments',
-        'range//$Start!/$End' => 'handleDateRange',
+        'range//$Start/$End' => 'handleDateRange',
         'search//$Query!' => 'handleSearch',
         '$Period!' => 'handlePeriod',
         '' => 'index'
     ];
 
+    //calendar-page/search/query?StartDate=YYYYMMDD&EndDate=YYYYMMDD
     public function handleSearch(HTTPRequest $r){
         $query = $r->param('Query');
 
@@ -43,11 +44,14 @@ class CalendarPageController extends PageController
         $start_date = $get_vars['StartDate'];
         $end_date = $get_vars['EndDate'];
 
+        //TODO: Make this work without start/end date?
+        //TODO: Make this work with Event Type
         $matchingEvents = $this->searchEvents($query, $start_date, $end_date);
 
         return $this->customise([
             'EventDateTimes' => $this->searchEvents($query),
-            'SearchTerm' => $query
+            'SearchTerm' => $query,
+            'DefaultDateHeader' => 'Events for keyword "' . $query . '"'
         ])->renderWith(['CalendarPage', 'Page']);
     }
 
@@ -61,10 +65,7 @@ class CalendarPageController extends PageController
             return $this->httpError(404, 'Event not found');
         }
 
-        $urlTime = NULL;
-        if($time != NULL){
-            $urlTime = substr($time, 0, 2) . ':' . substr($time, 2, 2) . ':00';
-        }
+        $urlTime = ($time != NULL ? substr($time, 0, 2) . ':' . substr($time, 2, 2) . ':00' : NULL);
 
         $event_datetime = $event->getDateTime($date, $urlTime);
 
@@ -125,13 +126,15 @@ class CalendarPageController extends PageController
 
         $Start = $r->param('Start');
         $End = $r->param('End');
-        //Based on YYYY-MM-DD format
+        //Values are YYYYMMDD in URL (no spaces or dashes)
         $dateRegex = '/^(19|20)[0-9]{2}(0|1)[0-9](0|1|2|3)[0-9]$/';
+        $dateHeader = 'Viewing Events for ';
 
-        if(preg_match($dateRegex, $Start) == 0){
+        if(preg_match($dateRegex, $Start) != 1){
             return $this->httpError(404, 'Invalid start date for range');
         } else {
             $rangeFilter['Start'] = substr($Start,0,4) . '-' . substr($Start,4,2) . '-' . substr($Start,6,2);
+            $dateHeader .= date('F j, Y', strtotime($rangeFilter['Start']));
         }
 
         if($End){
@@ -139,11 +142,13 @@ class CalendarPageController extends PageController
                 return $this->httpError(404, 'Invalid end date for range');
             } else {
                 $rangeFilter['End'] = substr($End,0,4) . '-' . substr($End,4,2) . '-' . substr($End,6,2);
+                $dateHeader .= ' to ' . date('F j, Y', strtotime($rangeFilter['End']));
             }
         }
 
         return $this->customise([
-            'EventDateTimes' => $this->getEventDateTimes($rangeFilter)
+            'EventDateTimes' => $this->getEventDateTimes($rangeFilter),
+            'DefaultDateHeader' => $dateHeader
         ])->renderWith(['CalendarPage', 'Page']);
 
     }
@@ -178,15 +183,15 @@ class CalendarPageController extends PageController
 
         $dateHeader = 'Viewing Events for ';
             
-        if($params['Day'] && $params['Month']){
-                $dateString = $params['Year'] . '-' . $params['Month'] . '-' . $params['Day'];
-                $dateHeader .= date('F j', strtotime($dateString)) . ', ';
-        } else {
-                $dateString = $params['Year'] . '-' . $params['Month'];
-                $dateHeader .= date('F ', strtotime($dateString));
+        if(!is_null($params['Day']) && !is_null($params['Month'])){
+            $dateString = $params['Year'] . '-' . $params['Month'] . '-' . $params['Day'];
+            $dateHeader .= date('F j, Y', strtotime($dateString));
+        } else if(is_null($params['Day']) && !is_null($params['Month'])) {
+            $dateString = $params['Year'] . '-' . $params['Month'];
+            $dateHeader .= date('F Y', strtotime($dateString));
+        } else {        
+            $dateHeader .= ' ' . $params['Year'];
         }
-        
-        $dateHeader .= ' ' . $params['Year'];
 
         return $this->customise([
             'EventDateTimes' => $this->getEventDateTimes($rangeFilter),
