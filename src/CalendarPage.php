@@ -75,7 +75,7 @@ class CalendarPage extends SiteTree
 		return Event::get()->filter(['URLSegment' => $url_segment])->first();
 	}
 
-	public function getEventDateTimes($filter = false){
+	public function getEventDateTimes($filter = false, $skip = 0){
 		$eventIDs = $this->Events()->map('ID', 'ID')->toArray();
 
 		if(!empty($eventIDs)){
@@ -134,7 +134,7 @@ class CalendarPage extends SiteTree
 
 		}
 
-		return EventDateTime::get()->filter($eventFilter)->sort(['StartDate' => 'ASC', 'StartTime' => 'ASC']);
+		return EventDateTime::get()->filter($eventFilter)->sort(['StartDate' => 'ASC', 'StartTime' => 'ASC'])->limit($this->EventsPerPage, $skip);
 		
 		} else {
 			return false;
