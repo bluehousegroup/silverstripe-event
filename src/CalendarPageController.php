@@ -36,24 +36,14 @@ class CalendarPageController extends PageController
         '' => 'index'
     ];
 
-    //calendar-page/search/query?StartDate=YYYYMMDD&EndDate=YYYYMMDD
-    public function handleSearch(HTTPRequest $r){
-        $query = $r->param('Query');
-
-        $get_vars = $r->getVars();
-        $start_date = $get_vars['StartDate'];
-        $end_date = $get_vars['EndDate'];
-
-        //TODO: Make this work without start/end date?
-        //TODO: Make this work with Event Type
-        $matchingEvents = $this->searchEvents($query, $start_date, $end_date);
-
+    public function index(HTTPRequest $r)
+    {
+        $skip = ($r->getVar('skip') ? intval($r->getVar('skip')) : 0);
+        $eventDateTimes = $this->getAllEvents($skip);
         return $this->customise([
-            'EventDateTimes' => $this->searchEvents($query),
-            'SearchTerm' => $query,
-            'DefaultDateHeader' => 'Events for keyword "' . $query . '"'
+            'EventDateTimes' => $eventDateTimes
         ])->renderWith(['CalendarPage', 'Page']);
-    }
+    }    
 
     public function viewOccurence(HTTPRequest $r){
         $url_segment = $r->param('URLSegment');
@@ -94,7 +84,6 @@ class CalendarPageController extends PageController
           $date_times = $event->getDateTimes($date);
 
           if (empty($date_times->toArray())) {
-              echo "<pre>"; print_r($date_times->toArray()); die();
               $date = null;
           }
         }
@@ -105,6 +94,24 @@ class CalendarPageController extends PageController
             'DateTimes' => $date_times
         ])->renderWith(['EventViewPage', 'Page']);
     }
+
+    //calendar-page/search/query?StartDate=YYYYMMDD&EndDate=YYYYMMDD
+    public function handleSearch(HTTPRequest $r){
+        $query = $r->param('Query');
+        $get_vars = $r->getVars();
+        $start_date = $get_vars['StartDate'];
+        $end_date = $get_vars['EndDate'];
+
+        //TODO: Make this work without start/end date?
+        //TODO: Make this work with Event Type
+        $matchingEvents = $this->searchEvents($query, $start_date, $end_date);
+
+        return $this->customise([
+            'EventDateTimes' => $this->searchEvents($query),
+            'SearchTerm' => $query,
+            'DefaultDateHeader' => 'Events for keyword "' . $query . '"'
+        ])->renderWith(['CalendarPage', 'Page']);
+    }    
 
     public function handlePeriod(HTTPRequest $r){
         $Period = $r->param('Period');
@@ -197,12 +204,6 @@ class CalendarPageController extends PageController
             'EventDateTimes' => $this->getEventDateTimes($rangeFilter),
             'DefaultDateHeader' => $dateHeader
         ])->renderWith(['CalendarPage', 'Page']);
-
-    }
-
-    public function index(HTTPRequest $r){
-
-        return $this->renderWith(['CalendarPage', 'Page']);
 
     }
 

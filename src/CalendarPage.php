@@ -42,7 +42,16 @@ class CalendarPage extends SiteTree
 		'Events' => Event::class
 	];
 
-	public function searchEvents($query, $start_date = null, $end_date = null){
+	public function getAllEvents($skip = 0)
+	{
+		$event_ids = $this->Events()->map('ID', 'ID')->toArray();
+		$eventDateTimes =  EventDateTime::get()->filter(['EventID' => $event_ids]);
+		return $eventDateTimes->limit($this->EventsPerPage, $skip);
+	}
+
+
+	public function searchEvents($query, $start_date = null, $end_date = null, $skip = 0)
+	{
 		//TODO: Is more validation against the search term required?
 
 		$event_ids = $this->Events()->filterAny([
@@ -61,21 +70,25 @@ class CalendarPage extends SiteTree
 				$filters['EndDate:LessThanOrEqual'] = date('Y-m-d', strtotime($end_date));
 			}
 
-			return EventDateTime::get()->filter($filters)->sort(['StartDate' => 'ASC', 'StartTime' => 'ASC']);
+			return EventDateTime::get()->filter($filters)->sort(['StartDate' => 'ASC', 'StartTime' => 'ASC'])->limit($this->EventsPerPage, $skip);
 		} else {
 			return false;
 		}
 	}
 
-	public function getEvent($id){
+	public function getEvent($id)
+	{
 		return Event::get()->byId($id);
 	}
 
-	public function getEventByURLSegment($url_segment){
+	public function getEventByURLSegment($url_segment)
+	{
 		return Event::get()->filter(['URLSegment' => $url_segment])->first();
 	}
 
-	public function getEventDateTimes($filter = false, $skip = 0){
+	public function getEventDateTimes($filter = false, $skip = 0)
+	{
+		
 		$eventIDs = $this->Events()->map('ID', 'ID')->toArray();
 
 		if(!empty($eventIDs)){
@@ -134,14 +147,17 @@ class CalendarPage extends SiteTree
 
 		}
 
-		return EventDateTime::get()->filter($eventFilter)->sort(['StartDate' => 'ASC', 'StartTime' => 'ASC'])->limit($this->EventsPerPage, $skip);
+		$eventDateTimes = EventDateTime::get()->filter($eventFilter)->sort(['StartDate' => 'ASC', 'StartTime' => 'ASC']);
+		$limit = $eventDateTimes->limit($this->EventsPerPage, $skip);
+		return $limit;
 		
 		} else {
 			return false;
 		}
 	}
 
-	public function getCMSFields() {
+	public function getCMSFields() 
+	{
 		$self = $this;
 
 		$this->beforeUpdateCMSFields(function($fields) use ($self) {
