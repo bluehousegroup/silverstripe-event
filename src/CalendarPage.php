@@ -6,7 +6,7 @@ use SilverStripe\CMS\Model\SiteTree;
 use SilverStripe\Forms\NumericField;
 use SilverStripe\Forms\TextField;
 use SilverStripe\Forms\DropdownField;
-
+use SilverStripe\Control\Controller;
 use SilverStripe\Forms\GridField\GridField;
 use SilverStripe\Forms\GridField\GridFieldConfig;
 use SilverStripe\Forms\GridField\GridFieldConfig_RelationEditor;
@@ -42,17 +42,21 @@ class CalendarPage extends SiteTree
 		'Events' => Event::class
 	];
 
-	public function getAllEvents($skip = 0)
+	public function getAllEvents()
 	{
+		$skip = Controller::curr()->getRequest()->getVar('skip');
+		$pageSkip = ($skip ? intval($skip) : 0);
 		$event_ids = $this->Events()->map('ID', 'ID')->toArray();
-		$eventDateTimes =  EventDateTime::get()->filter(['EventID' => $event_ids]);
-		return $eventDateTimes->limit($this->EventsPerPage, $skip);
+		$eventDateTimes =  EventDateTime::get()->filter(['EventID' => $event_ids])->sort(['StartDate' => 'ASC', 'StartTime' => 'ASC']);
+		return $eventDateTimes->limit($this->EventsPerPage, $pageSkip);
 	}
 
-
-	public function searchEvents($query, $start_date = null, $end_date = null, $skip = 0)
+	public function searchEvents($query, $start_date = null, $end_date = null)
 	{
 		//TODO: Is more validation against the search term required?
+
+		$skip = Controller::curr()->getRequest()->getVar('skip');
+		$pageSkip = ($skip ? intval($skip) : 0);
 
 		$event_ids = $this->Events()->filterAny([
 			'Title:PartialMatch' => $query,
@@ -62,15 +66,10 @@ class CalendarPage extends SiteTree
 		if (!empty($event_ids)) {
 			$filters = ['EventID' => $event_ids, 'StartDate:GreaterThanOrEqual' => date('Y-m-d')];
 
-			if ($start_date) {
-				$filters['StartDate:GreaterThanOrEqual'] = date('Y-m-d', strtotime($start_date));
-			}
+			if ($start_date) $filters['StartDate:GreaterThanOrEqual'] = date('Y-m-d', strtotime($start_date));
+			if ($end_date) $filters['EndDate:LessThanOrEqual'] = date('Y-m-d', strtotime($end_date));
 
-			if ($end_date) {
-				$filters['EndDate:LessThanOrEqual'] = date('Y-m-d', strtotime($end_date));
-			}
-
-			return EventDateTime::get()->filter($filters)->sort(['StartDate' => 'ASC', 'StartTime' => 'ASC'])->limit($this->EventsPerPage, $skip);
+			return EventDateTime::get()->filter($filters)->sort(['StartDate' => 'ASC', 'StartTime' => 'ASC'])->limit($this->EventsPerPage, $pageSkip);
 		} else {
 			return false;
 		}
@@ -86,8 +85,11 @@ class CalendarPage extends SiteTree
 		return Event::get()->filter(['URLSegment' => $url_segment])->first();
 	}
 
-	public function getEventDateTimes($filter = false, $skip = 0)
+	public function getEventDateTimes($filter = false)
 	{
+
+		$skip = Controller::curr()->getRequest()->getVar('skip');
+		$pageSkip = ($skip ? intval($skip) : 0);		
 		
 		$eventIDs = $this->Events()->map('ID', 'ID')->toArray();
 
