@@ -41,7 +41,7 @@ class EventDateTime extends DataObject
 		'EndTime' => ''
 	];
 
-	public function populateDefaults() 
+	public function populateDefaults()
 	{
 		$today = date('m/d/Y');
 		$this->StartDate = $today;
@@ -104,16 +104,23 @@ class EventDateTime extends DataObject
 	{
 
 		$controller = CalendarPage::get()->filter(['ID' => $this->Event->CalendarID])->first();
-		$link = Controller::join_links(Director::baseURL(), $controller->Link('event'), '/' . $this->Event->URLSegment);
 
-		$link .= '/' . $this->StartDate;
+		$urlsegment_with_date = $this->Event->URLSegment . '/' . $this->StartDate;
 
 		if($this->AllDay == 0){
-		$dateString = strtotime($this->StartDate . ' ' . $this->StartTime);
-			$link .= '/' . date('Hi', $dateString);
+			$date_string = strtotime($this->StartDate . ' ' . $this->StartTime);
+			$urlsegment_with_date .= '/' . date('Hi', $date_string);
 		}
+
+		$link = Controller::join_links(Director::baseURL(), $controller->Link('event'), '/' . $urlsegment_with_date);
+
 		return $link;
-	}	
+	}
+
+	public function AbsoluteLink($action = null)
+	{
+		return Director::absoluteURL($this->Link($action));
+	}
 
 	public function getCMSFields()
 	{
