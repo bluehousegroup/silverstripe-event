@@ -24,7 +24,6 @@ class EventDateTime extends DataObject
 
 	private static $singular_name = 'Occurrence';
 	private static $plural_name = 'Occurrences';
-
 	private static $table_name = 'EventDateTime';
 
 	private static $db = [
@@ -74,23 +73,14 @@ class EventDateTime extends DataObject
 		}
 
 		$filter = [
-			'EventID' => $this->ID,
+			'EventID' => $this->Event->ID,
 			'StartDate' => $this->StartDate
 		];
 
 		if($this->StartTime) $filter['StartTime'] = $this->StartTime;
 		else $filter['AllDay'] = 1;
-		$existingDT = EventDateTime::get()->filter($filter);
-
-		//$eventDateTimes = $this->Event->EventDateTimes();
-		//$existingDT = $this->Event->EventDateTimes()->filter($filter);
-		//var_dump($eventDateTimes);
-		//die();
-		
-		//if(sizeof($existingDT) > 0) $result->addError('Conflict with existing Occurrence, please choose another Date and Time');
-
-		//$result->addError('Conflict with existing Occurrence - Number: ' . sizeof($existingDT));
-		
+		$existingDT = EventDateTime::get()->filter($filter)->toArray();
+		if(sizeof($existingDT) > 0) $result->addError("Conflict with existing Occurrence, please choose a start time different than $this->StartTime");
 
 		return $result;
 
