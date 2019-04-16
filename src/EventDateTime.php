@@ -51,7 +51,8 @@ class EventDateTime extends DataObject
 		parent::populateDefaults();
 	}
 
-	public function  validate(){
+	public function  validate()
+	{
 
 		$result = parent::validate();
 
@@ -80,7 +81,7 @@ class EventDateTime extends DataObject
 		if($this->StartTime) $filter['StartTime'] = $this->StartTime;
 		else $filter['AllDay'] = 1;
 		$existingDT = EventDateTime::get()->filter($filter)->toArray();
-		if(sizeof($existingDT) > 0) $result->addError("Conflict with existing Occurrence, please choose a start time different than $this->StartTime");
+		if(sizeof($existingDT) > 1) $result->addError("Conflict with existing Occurrence, please choose a start time different than $this->StartTime");
 
 		return $result;
 
