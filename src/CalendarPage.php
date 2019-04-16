@@ -47,7 +47,11 @@ class CalendarPage extends SiteTree
 		$skip = Controller::curr()->getRequest()->getVar('skip');
 		$pageSkip = ($skip ? intval($skip) : 0);
 		$event_ids = $this->Events()->map('ID', 'ID')->toArray();
-		$eventDateTimes =  EventDateTime::get()->filter(['EventID' => $event_ids])->sort(['StartDate' => 'ASC', 'StartTime' => 'ASC']);
+
+		$eventDateTimes =  EventDateTime::get()
+			->filter(['EventID' => $event_ids, 'StartDate:GreaterThanOrEqual' => date('Y-m-d')])
+			->sort(['StartDate' => 'ASC', 'StartTime' => 'ASC']);
+
 		return $eventDateTimes->limit($this->EventsPerPage, $pageSkip);
 	}
 
@@ -89,8 +93,8 @@ class CalendarPage extends SiteTree
 	{
 
 		$skip = Controller::curr()->getRequest()->getVar('skip');
-		$pageSkip = ($skip ? intval($skip) : 0);		
-		
+		$pageSkip = ($skip ? intval($skip) : 0);
+
 		$eventIDs = $this->Events()->map('ID', 'ID')->toArray();
 
 		if(!empty($eventIDs)){
@@ -111,7 +115,7 @@ class CalendarPage extends SiteTree
 					break;
 				case ($Year && $Month && !$Day):
 					$eventFilter['StartDate:StartsWith'] = "%{$Year}-{$Month}%";
-					break;					
+					break;
 				case ($Year && $Month && $Day):
 					$eventFilter['StartDate'] = "{$Year}-{$Month}-{$Day}";
 					break;
@@ -143,7 +147,7 @@ class CalendarPage extends SiteTree
 					$last = date('Y-m-t');
 					$eventFilter['StartDate:GreaterThanOrEqual'] = $first;
 					$eventFilter['StartDate:LessThanOrEqual'] = $last;
-					break;									
+					break;
 
 			}
 
@@ -152,13 +156,13 @@ class CalendarPage extends SiteTree
 		$eventDateTimes = EventDateTime::get()->filter($eventFilter)->sort(['StartDate' => 'ASC', 'StartTime' => 'ASC']);
 		$limit = $eventDateTimes->limit($this->EventsPerPage, $skip);
 		return $limit;
-		
+
 		} else {
 			return false;
 		}
 	}
 
-	public function getCMSFields() 
+	public function getCMSFields()
 	{
 		$self = $this;
 
@@ -181,7 +185,7 @@ class CalendarPage extends SiteTree
 			$fields->addFieldToTab("Root.Settings", new TextField('RSSTitle', _t('Calendar.RSSTITLE','Title of RSS Feed')),'Content');
 
 			//TODO add tab to manage Events
-			$fields->addFieldToTab("Root.Events", 
+			$fields->addFieldToTab("Root.Events",
 				GridField::create(
 					'Events',
 					_t(__CLASS__ . '.Events', 'Events'),
@@ -189,7 +193,7 @@ class CalendarPage extends SiteTree
 					$events_config = GridFieldConfig_RelationEditor::create()
 				)->setTitle(
 					'Manage events for calendar'
-				)			
+				)
 			);
 		});
 
