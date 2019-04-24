@@ -48,6 +48,8 @@ class CalendarPage extends SiteTree
 		$pageSkip = ($skip ? intval($skip) : 0);
 		$event_ids = $this->Events()->map('ID', 'ID')->toArray();
 
+		if(empty($event_ids)) return [];
+
 		$eventDateTimes =  EventDateTime::get()
 			->filter(['EventID' => $event_ids, 'StartDate:GreaterThanOrEqual' => date('Y-m-d')])
 			->sort(['StartDate' => 'ASC', 'StartTime' => 'ASC']);
