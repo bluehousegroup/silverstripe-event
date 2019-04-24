@@ -57,12 +57,13 @@ class CalendarPage extends SiteTree
 		return $eventDateTimes->limit($this->EventsPerPage, $pageSkip);
 	}
 
-	public function searchEvents($query, $start_date = null, $end_date = null)
+	public function searchEvents($query, $start_date = null, $end_date = null, $limit = null)
 	{
 		//TODO: Is more validation against the search term required?
 
 		$skip = Controller::curr()->getRequest()->getVar('skip');
 		$pageSkip = ($skip ? intval($skip) : 0);
+		$limit = ($limit ? $limit : $this->EventsPerPage);
 
 		$event_ids = $this->Events()->filterAny([
 			'Title:PartialMatch' => $query,
@@ -75,7 +76,7 @@ class CalendarPage extends SiteTree
 			if ($start_date) $filters['StartDate:GreaterThanOrEqual'] = date('Y-m-d', strtotime($start_date));
 			if ($end_date) $filters['EndDate:LessThanOrEqual'] = date('Y-m-d', strtotime($end_date));
 
-			return EventDateTime::get()->filter($filters)->sort(['StartDate' => 'ASC', 'StartTime' => 'ASC'])->limit($this->EventsPerPage, $pageSkip);
+			return EventDateTime::get()->filter($filters)->sort(['StartDate' => 'ASC', 'StartTime' => 'ASC'])->limit($limit, $pageSkip);
 		} else {
 			return false;
 		}
