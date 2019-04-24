@@ -65,7 +65,8 @@ class CalendarPageController extends PageController
 
         return $this->customise([
             'Event' => $event,
-            'EventDateTime' => $event_datetime
+            'EventDateTime' => $event_datetime,
+            'MetaTitle' => $event->Title            
         ])->renderWith(['EventViewPage', 'Page']);
     }
 
