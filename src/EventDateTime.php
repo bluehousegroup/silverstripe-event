@@ -31,7 +31,8 @@ class EventDateTime extends DataObject
 		'StartTime' => 'Time',
 		'EndDate' => 'Date',
 		'EndTime' => 'Time',
-		'AllDay' => 'Boolean'
+		'AllDay' => 'Boolean',
+		'Description' => 'HTMLText',		
 	];
 
 	private static $defaults = [
@@ -132,7 +133,8 @@ class EventDateTime extends DataObject
 					DateField::create('StartDate',_t(__CLASS__ . '.STARTDATE', 'Start Date')),
 					TimeField::create('StartTime',_t(__CLASS__ . '.STARTTIME', 'Start Time')),
 					DateField::create('EndDate',_t(__CLASS__ . '.ENDDATE', 'End Date')),
-					TimeField::create('EndTime',_t(__CLASS__ . '.STARTTIME', 'End Time'))
+					TimeField::create('EndTime',_t(__CLASS__ . '.STARTTIME', 'End Time')),
+					HTMLEditorField::create('Description',_t(__CLASS__ . '.DESCRIPTION', 'Description'))
 				))
 		);
 
