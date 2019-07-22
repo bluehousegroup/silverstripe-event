@@ -127,7 +127,7 @@ class Event extends DataObject
 
         return $filteredTitle;
 	}
-	
+
     public function validURLSegment()
     {
         // Check for clashing pages by url, id, and parent
@@ -141,7 +141,7 @@ class Event extends DataObject
 
         return !$source->exists();
 	}
-	
+
     // attribute to use for url segments
     // defaults to Title but may be overridden in the specific classes
     public function URLSegmentTitle()
@@ -151,7 +151,7 @@ class Event extends DataObject
         $this->extend('updateURLSegmentTitle', $title);
 
         return $title;
-    }	
+    }
 
 	/**
 	 * Return the link for this object, with the {@link Director::baseURL()} included.
@@ -161,15 +161,15 @@ class Event extends DataObject
 	 */
 	public function Link($action = null)
 	{
-		$controller = CalendarPage::get()->filter(['ID' => $this->CalendarID])->first();
-		$link = Controller::join_links(Director::baseURL(), $controller->Link('event'), '/' . $this->URLSegment);
+		$calendar = ($this->CalendarID ? CalendarPage::get()->filter(['ID' => $this->CalendarID])->first() : CalendarPage::get()->sort(['Created' => 'ASC'])->first() );
+		$link = Controller::join_links(Director::baseURL(), $calendar->Link('event'), '/' . $this->URLSegment);
 		return $link;
 	}
 
 	public function BaseLink()
 	{
-		$controller = CalendarPage::get()->filter(['ID' => $this->CalendarID])->first();
-		$link = Director::absoluteURL(Controller::join_links(Director::baseURL(), $controller->Link('event'), '/'));
+		$calendar = ($this->CalendarID ? CalendarPage::get()->filter(['ID' => $this->CalendarID])->first() : CalendarPage::get()->sort(['Created' => 'ASC'])->first() );
+		$link = Director::absoluteURL(Controller::join_links(Director::baseURL(), $calendar->Link('event'), '/'));
 		return $link;
 	}
 
