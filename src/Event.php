@@ -208,7 +208,7 @@ class Event extends DataObject
 			GridFieldAddExistingAutocompleter::class
 		);
 
-		$this->updateCMSFields($fields);
+        $this->extend('updateCMSFields', $fields);
 
 		return $fields;
 	}

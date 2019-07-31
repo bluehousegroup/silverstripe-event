@@ -143,7 +143,7 @@ class EventDateTime extends DataObject
                 ))
         );
 
-        $this->updateCMSFields($fields);
+        $this->extend('updateCMSFields', $fields);
 
         return $fields;
     }
