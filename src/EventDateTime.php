@@ -52,6 +52,10 @@ class EventDateTime extends DataObject
         parent::populateDefaults();
     }
 
+    private static $has_one = [
+        'Event' => Event::class,
+    ];
+
     public function validate()
     {
 
@@ -93,10 +97,6 @@ class EventDateTime extends DataObject
 
     }
 
-    private static $has_one = [
-        'Event' => Event::class,
-    ];
-
     public function getTitle()
     {
         return $this->StartDate . ' ' . $this->StartTime;
@@ -131,6 +131,7 @@ class EventDateTime extends DataObject
 
     public function getCMSFields()
     {
+
         $fields = FieldList::create(
             TabSet::create('Root',
                 Tab::create('Main',

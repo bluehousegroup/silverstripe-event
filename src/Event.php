@@ -24,66 +24,69 @@ use SilverStripe\View\Parsers\URLSegmentFilter;
 
 class Event extends DataObject
 {
-	private static $extensions = [
-		Versioned::class
-	];
+    private static $extensions = [
+        Versioned::class
+    ];
 
-	private static $table_name = 'Event';
+    private static $table_name = 'Event';
 
-	private static $db = [
-		'Title' => 'Varchar(255)',
-		'Description' => 'HTMLText',
-		'URLSegment' => 'Varchar(63)'
-	];
+    private static $db = [
+        'Title' => 'Varchar(255)',
+        'Description' => 'HTMLText',
+        'URLSegment' => 'Varchar(63)'
+    ];
 
-	private static $has_many = [
-		'EventDateTimes' => EventDateTime::class,
-	];
+    private static $has_many = [
+        'EventDateTimes' => EventDateTime::class,
+    ];
 
-	private static $has_one = [
-		'Calendar' => CalendarPage::class,
-	];
+    private static $has_one = [
+        'Calendar' => CalendarPage::class,
+    ];
 
-	private static $summary_fields = [
-		'Title' => 'Title',
-		'StartTimeSummary' => 'Event Date/Time',
-		'URLSegment' => 'URLSegment'
-	];
+    private static $summary_fields = [
+        'Title' => 'Title',
+        'StartTimeSummary' => 'Event Date/Time',
+        'URLSegment' => 'URLSegment'
+    ];
 
-	private static $searchable_fields = [
-		'Title',
-		'Description'
-	];
+    private static $searchable_fields = [
+        'Title',
+        'Description'
+    ];
 
-	public function getStartTimeSummary()
-	{
-		$date = $this->EventDateTimes()->sort([
-			'StartDate' => 'desc',
-			'StartTime' => 'desc'
-		])->first();
+    public function getStartTimeSummary()
+    {
+        $date = $this->EventDateTimes()->sort([
+            'StartDate' => 'desc',
+            'StartTime' => 'desc'
+        ])->first();
 
-		return $date;
-	}
+        return $date;
+    }
 
-	public function getDateTime($date, $time) {
-		if ($time == NULL) {
-			return $this->EventDateTimes()->filter([
-				'StartDate' => date('Y-m-d',strtotime($date)), 
-				'AllDay' => true])->first();
-		}
+    public function getDateTime($date, $time)
+    {
+        if ($time == null) {
+            return $this->EventDateTimes()->filter([
+                'StartDate' => date('Y-m-d', strtotime($date)),
+                'AllDay' => true
+            ])->first();
+        }
 
-		$dateTimes = $this->EventDateTimes();
-		$dateTime = $dateTimes->filter([
-			'StartDate' => date('Y-m-d',strtotime($date)), 
-			'StartTime' => $time])->first();
+        $dateTimes = $this->EventDateTimes();
+        $dateTime = $dateTimes->filter([
+            'StartDate' => date('Y-m-d', strtotime($date)),
+            'StartTime' => $time
+        ])->first();
 
-		return $dateTime;
-	}
+        return $dateTime;
+    }
 
-	public function getResources()
-	{
-		return Resource::getByResourceType($this->SharePointTag);
-	}
+    public function getResources()
+    {
+        return Resource::getByResourceType($this->SharePointTag);
+    }
 
     public function onBeforeWrite()
     {
@@ -110,6 +113,7 @@ class Event extends DataObject
             $this->owner->URLSegment = preg_replace('/-[0-9]+$/', null, $this->owner->URLSegment) . '-' . $count;
             $count++;
         }
+
     }
 
     public function generateURLSegment($title)
@@ -126,7 +130,7 @@ class Event extends DataObject
         $this->extend('updateURLSegment', $filteredTitle, $title);
 
         return $filteredTitle;
-	}
+    }
 
     public function validURLSegment()
     {
@@ -140,7 +144,7 @@ class Event extends DataObject
         }
 
         return !$source->exists();
-	}
+    }
 
     // attribute to use for url segments
     // defaults to Title but may be overridden in the specific classes
@@ -153,63 +157,63 @@ class Event extends DataObject
         return $title;
     }
 
-	/**
-	 * Return the link for this object, with the {@link Director::baseURL()} included.
-	 *
-	 * @param string $action optional additional url parameters
-	 * @return string
-	 */
-	public function Link($action = null)
-	{
-		$calendar = ($this->CalendarID ? CalendarPage::get()->filter(['ID' => $this->CalendarID])->first() : CalendarPage::get()->sort(['Created' => 'ASC'])->first() );
-		$link = Controller::join_links(Director::baseURL(), $calendar->Link('event'), '/' . $this->URLSegment);
-		return $link;
-	}
+    /**
+     * Return the link for this object, with the {@link Director::baseURL()} included.
+     *
+     * @param string $action optional additional url parameters
+     * @return string
+     */
+    public function Link($action = null)
+    {
+        $calendar = ($this->CalendarID ? CalendarPage::get()->filter(['ID' => $this->CalendarID])->first() : CalendarPage::get()->sort(['Created' => 'ASC'])->first());
+        $link = Controller::join_links(Director::baseURL(), $calendar->Link('event'), '/' . $this->URLSegment);
+        return $link;
+    }
 
-	public function BaseLink()
-	{
-		$calendar = ($this->CalendarID ? CalendarPage::get()->filter(['ID' => $this->CalendarID])->first() : CalendarPage::get()->sort(['Created' => 'ASC'])->first() );
-		$link = Director::absoluteURL(Controller::join_links(Director::baseURL(), $calendar->Link('event'), '/'));
-		return $link;
-	}
+    public function BaseLink()
+    {
+        $calendar = ($this->CalendarID ? CalendarPage::get()->filter(['ID' => $this->CalendarID])->first() : CalendarPage::get()->sort(['Created' => 'ASC'])->first());
+        $link = Director::absoluteURL(Controller::join_links(Director::baseURL(), $calendar->Link('event'), '/'));
+        return $link;
+    }
 
-	public function getCMSFields()
-	{
-		$fields = FieldList::create(
-			TabSet::create('Root',
-				Tab::create('Main',
-					TextField::create('Title',_t(__CLASS__ . '.TITLE', 'Title')),
-					SiteTreeURLSegmentField::create(
-						'URLSegment',
-						'URL Segment'
-					)->setURLPrefix($this->BaseLink()),
-					HTMLEditorField::create('Description',_t(__CLASS__ . '.DESCRIPTION', 'Description')),
-					GridField::create(
-						'EventDateTimes',
-						_t(__CLASS__ . '.EventDateTimes', 'Occurrences'),
-						$this->EventDateTimes(),
-						$event_date_times_config = GridFieldConfig_RelationEditor::create()
-					)
-				)
-			)
-		);
+    public function getCMSFields()
+    {
+        $fields = FieldList::create(
+            TabSet::create('Root',
+                Tab::create('Main',
+                    TextField::create('Title', _t(__CLASS__ . '.TITLE', 'Title')),
+                    SiteTreeURLSegmentField::create(
+                        'URLSegment',
+                        'URL Segment'
+                    )->setURLPrefix($this->BaseLink()),
+                    HTMLEditorField::create('Description', _t(__CLASS__ . '.DESCRIPTION', 'Description')),
+                    GridField::create(
+                        'EventDateTimes',
+                        _t(__CLASS__ . '.EventDateTimes', 'Occurrences'),
+                        $this->EventDateTimes(),
+                        $event_date_times_config = GridFieldConfig_RelationEditor::create()
+                    )
+                )
+            )
+        );
 
-		$event_date_times_config->getComponentByType(
-			GridFieldDataColumns::class
-		)->setDisplayFields	([
-			'StartDate.nice' => 'Start Date',
-			'StartTime.nice' => 'Start Time',
-			'EndDate.nice' => 'End Date',
-			'EndTime.nice' => 'End Time',
-			'AllDay.nice' => 'All Day'
-		]);
+        $event_date_times_config->getComponentByType(
+            GridFieldDataColumns::class
+        )->setDisplayFields([
+            'StartDate.nice' => 'Start Date',
+            'StartTime.nice' => 'Start Time',
+            'EndDate.nice' => 'End Date',
+            'EndTime.nice' => 'End Time',
+            'AllDay.nice' => 'All Day'
+        ]);
 
-		$event_date_times_config->removeComponentsByType(
-			GridFieldAddExistingAutocompleter::class
-		);
+        $event_date_times_config->removeComponentsByType(
+            GridFieldAddExistingAutocompleter::class
+        );
 
         $this->extend('updateCMSFields', $fields);
 
-		return $fields;
-	}
+        return $fields;
+    }
 }
