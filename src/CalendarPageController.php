@@ -43,7 +43,7 @@ class CalendarPageController extends PageController
         return $this->customise([
             'EventDateTimes' => $eventDateTimes
         ])->renderWith(['CalendarPage', 'Page']);
-    }    
+    }
 
     public function viewOccurence(HTTPRequest $r){
         $url_segment = $r->param('URLSegment');
@@ -66,8 +66,8 @@ class CalendarPageController extends PageController
         return $this->customise([
             'Event' => $event,
             'EventDateTime' => $event_datetime,
-            'MetaTitle' => $event->Title            
-        ])->renderWith(['EventViewPage', 'Page']);
+            'MetaTitle' => $event->Title
+        ])->renderWith(['CalendarPage_event', 'Page']);
     }
 
     public function viewEvent(HTTPRequest $r){
@@ -93,7 +93,7 @@ class CalendarPageController extends PageController
             'Event' => $event,
             'Date' => $date,
             'DateTimes' => $date_times
-        ])->renderWith(['EventViewPage', 'Page']);
+        ])->renderWith(['CalendarPage_event', 'Page']);
     }
 
     //calendar-page/search/query?StartDate=YYYYMMDD&EndDate=YYYYMMDD
@@ -112,7 +112,7 @@ class CalendarPageController extends PageController
             'SearchTerm' => $query,
             'DefaultDateHeader' => 'Events for keyword "' . $query . '"'
         ])->renderWith(['CalendarPage', 'Page']);
-    }    
+    }
 
     public function handlePeriod(HTTPRequest $r){
         $Period = $r->param('Period');
@@ -124,7 +124,7 @@ class CalendarPageController extends PageController
 
         return $this->customise([
             'EventDateTimes' => $this->getEventDateTimes($Period),
-            'SearchTerm' => $Period, 
+            'SearchTerm' => $Period,
             'DefaultDateHeader' => 'Events for this ' . $Period
         ])->renderWith(['CalendarPage', 'Page']);
 
@@ -190,14 +190,14 @@ class CalendarPageController extends PageController
         }
 
         $dateHeader = 'Viewing Events for ';
-            
+
         if(!is_null($params['Day']) && !is_null($params['Month'])){
             $dateString = $params['Year'] . '-' . $params['Month'] . '-' . $params['Day'];
             $dateHeader .= date('F j, Y', strtotime($dateString));
         } else if(is_null($params['Day']) && !is_null($params['Month'])) {
             $dateString = $params['Year'] . '-' . $params['Month'];
             $dateHeader .= date('F Y', strtotime($dateString));
-        } else {        
+        } else {
             $dateHeader .= ' ' . $params['Year'];
         }
 
