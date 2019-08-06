@@ -2,15 +2,21 @@
 
 namespace BluehouseGroup\Event;
 use PageController;
+use SilverStripe\Forms\EmailField;
+use SilverStripe\Forms\FieldList;
+use SilverStripe\Forms\Form;
+use SilverStripe\Forms\FormAction;
+use SilverStripe\Forms\LiteralField;
+use SilverStripe\Forms\RequiredFields;
+use SilverStripe\Forms\TextareaField;
+use SilverStripe\Forms\TextField;
 use SilverStripe\ORM\ArrayList;
 use SilverStripe\View\ArrayData;
-
 use SilverStripe\ORM\DataList;
-
 use SilverStripe\ORM\Map;
-
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\View\Requirements;
+use SilverStripe\Dev\Debug;
 
 class CalendarPageController extends PageController
 {
@@ -26,9 +32,9 @@ class CalendarPageController extends PageController
     ];
 
     private static $url_handlers = [
+        'event//$URLSegment' => 'viewEvent',
         'event//$URLSegment/$Date/$Time' => 'viewOccurence',
         'event//$URLSegment/$Date' => 'viewOccurence',
-        'event//$URLSegment' => 'viewEvent',
         'date//$Year!/$Month/$Day' => 'handleDateSegments',
         'range//$Start/$End' => 'handleDateRange',
         'search//$Query!' => 'handleSearch',
@@ -38,19 +44,24 @@ class CalendarPageController extends PageController
 
     public function index(HTTPRequest $r)
     {
+
         $skip = ($r->getVar('skip') ? intval($r->getVar('skip')) : 0);
         $eventDateTimes = $this->getAllEvents($skip);
         return $this->customise([
             'EventDateTimes' => $eventDateTimes
         ])->renderWith(['CalendarPage', 'Page']);
-    }    
+    }
 
     public function viewOccurence(HTTPRequest $r){
         $url_segment = $r->param('URLSegment');
         $date = $r->param('Date');
         $time = $r->param('Time');
 
+        Debug::show('oocc');
+//        Debug::show(HTTPRequest);
+
         $event = $this->getEventByURLSegment($url_segment);
+
         if (!$event) {
             return $this->httpError(404, 'Event not found');
         }
@@ -59,6 +70,9 @@ class CalendarPageController extends PageController
 
         $event_datetime = $event->getDateTime($date, $urlTime);
 
+//        Debug::show($event_datetime);
+//        die();
+
         if (!$event_datetime) {
             return $this->httpError(404, 'Event datetime not found');
         }
@@ -66,11 +80,16 @@ class CalendarPageController extends PageController
         return $this->customise([
             'Event' => $event,
             'EventDateTime' => $event_datetime,
-            'MetaTitle' => $event->Title            
-        ])->renderWith(['EventViewPage', 'Page']);
+            'MetaTitle' => $event->Title
+        ])->renderWith(['CalendarPage_event', 'Page']);
     }
 
     public function viewEvent(HTTPRequest $r){
+
+        $form = '';
+
+        $this->extend('getForm', $form);
+
         $get_vars = $r->getVars();
         $url_segment = $r->param('URLSegment');
         $date = $date_times = null;
@@ -81,19 +100,20 @@ class CalendarPageController extends PageController
         }
 
         if (isset($get_vars['date'])) {
-          $date = $get_vars['date'];
-          $date_times = $event->getDateTimes($date);
+            $date = $get_vars['date'];
+            $date_times = $event->getDateTimes($date);
 
-          if (empty($date_times->toArray())) {
-              $date = null;
-          }
+            if (empty($date_times->toArray())) {
+                $date = null;
+            }
         }
 
         return $this->customise([
             'Event' => $event,
             'Date' => $date,
-            'DateTimes' => $date_times
-        ])->renderWith(['EventViewPage', 'Page']);
+            'DateTimes' => $date_times,
+            'ContactForm' => $form
+        ])->renderWith(['CalendarPage_event', 'Page']);
     }
 
     //calendar-page/search/query?StartDate=YYYYMMDD&EndDate=YYYYMMDD
@@ -112,7 +132,7 @@ class CalendarPageController extends PageController
             'SearchTerm' => $query,
             'DefaultDateHeader' => 'Events for keyword "' . $query . '"'
         ])->renderWith(['CalendarPage', 'Page']);
-    }    
+    }
 
     public function handlePeriod(HTTPRequest $r){
         $Period = $r->param('Period');
@@ -124,7 +144,7 @@ class CalendarPageController extends PageController
 
         return $this->customise([
             'EventDateTimes' => $this->getEventDateTimes($Period),
-            'SearchTerm' => $Period, 
+            'SearchTerm' => $Period,
             'DefaultDateHeader' => 'Events for this ' . $Period
         ])->renderWith(['CalendarPage', 'Page']);
 
@@ -190,14 +210,14 @@ class CalendarPageController extends PageController
         }
 
         $dateHeader = 'Viewing Events for ';
-            
+
         if(!is_null($params['Day']) && !is_null($params['Month'])){
             $dateString = $params['Year'] . '-' . $params['Month'] . '-' . $params['Day'];
             $dateHeader .= date('F j, Y', strtotime($dateString));
         } else if(is_null($params['Day']) && !is_null($params['Month'])) {
             $dateString = $params['Year'] . '-' . $params['Month'];
             $dateHeader .= date('F Y', strtotime($dateString));
-        } else {        
+        } else {
             $dateHeader .= ' ' . $params['Year'];
         }
 
