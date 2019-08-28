@@ -21,6 +21,7 @@ use SilverStripe\Control\Director;
 use SilverStripe\Control\Controller;
 use SilverStripe\Forms\HTMLEditor\HTMLEditorField;
 use SilverStripe\View\Parsers\URLSegmentFilter;
+use SilverStripe\Dev\Debug;
 
 class Event extends DataObject
 {
@@ -65,20 +66,17 @@ class Event extends DataObject
         return $date;
     }
 
-    public function getDateTime($date, $time)
-    {
-        if ($time == null) {
+    public function getDateTime($date, $time) {
+        if ($time == NULL) {
             return $this->EventDateTimes()->filter([
-                'StartDate' => date('Y-m-d', strtotime($date)),
-                'AllDay' => true
-            ])->first();
+                'StartDate' => date('Y-m-d',strtotime($date)),
+                'AllDay' => true])->first();
         }
 
         $dateTimes = $this->EventDateTimes();
         $dateTime = $dateTimes->filter([
-            'StartDate' => date('Y-m-d', strtotime($date)),
-            'StartTime' => $time
-        ])->first();
+            'StartDate' => date('Y-m-d',strtotime($date)),
+            'StartTime' => $time])->first();
 
         return $dateTime;
     }
@@ -165,14 +163,14 @@ class Event extends DataObject
      */
     public function Link($action = null)
     {
-        $calendar = ($this->CalendarID ? CalendarPage::get()->filter(['ID' => $this->CalendarID])->first() : CalendarPage::get()->sort(['Created' => 'ASC'])->first());
+        $calendar = ($this->CalendarID ? CalendarPage::get()->filter(['ID' => $this->CalendarID])->first() : CalendarPage::get()->sort(['Created' => 'ASC'])->first() );
         $link = Controller::join_links(Director::baseURL(), $calendar->Link('event'), '/' . $this->URLSegment);
         return $link;
     }
 
     public function BaseLink()
     {
-        $calendar = ($this->CalendarID ? CalendarPage::get()->filter(['ID' => $this->CalendarID])->first() : CalendarPage::get()->sort(['Created' => 'ASC'])->first());
+        $calendar = ($this->CalendarID ? CalendarPage::get()->filter(['ID' => $this->CalendarID])->first() : CalendarPage::get()->sort(['Created' => 'ASC'])->first() );
         $link = Director::absoluteURL(Controller::join_links(Director::baseURL(), $calendar->Link('event'), '/'));
         return $link;
     }
@@ -182,12 +180,12 @@ class Event extends DataObject
         $fields = FieldList::create(
             TabSet::create('Root',
                 Tab::create('Main',
-                    TextField::create('Title', _t(__CLASS__ . '.TITLE', 'Title')),
+                    TextField::create('Title',_t(__CLASS__ . '.TITLE', 'Title')),
                     SiteTreeURLSegmentField::create(
                         'URLSegment',
                         'URL Segment'
                     )->setURLPrefix($this->BaseLink()),
-                    HTMLEditorField::create('Description', _t(__CLASS__ . '.DESCRIPTION', 'Description')),
+                    HTMLEditorField::create('Description',_t(__CLASS__ . '.DESCRIPTION', 'Description')),
                     GridField::create(
                         'EventDateTimes',
                         _t(__CLASS__ . '.EventDateTimes', 'Occurrences'),
@@ -200,7 +198,7 @@ class Event extends DataObject
 
         $event_date_times_config->getComponentByType(
             GridFieldDataColumns::class
-        )->setDisplayFields([
+        )->setDisplayFields	([
             'StartDate.nice' => 'Start Date',
             'StartTime.nice' => 'Start Time',
             'EndDate.nice' => 'End Date',
