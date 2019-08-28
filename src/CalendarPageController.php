@@ -2,21 +2,14 @@
 
 namespace BluehouseGroup\Event;
 use PageController;
-use SilverStripe\Forms\EmailField;
-use SilverStripe\Forms\FieldList;
-use SilverStripe\Forms\Form;
-use SilverStripe\Forms\FormAction;
-use SilverStripe\Forms\LiteralField;
-use SilverStripe\Forms\RequiredFields;
-use SilverStripe\Forms\TextareaField;
-use SilverStripe\Forms\TextField;
 use SilverStripe\ORM\ArrayList;
 use SilverStripe\View\ArrayData;
 use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\Map;
+use SilverStripe\Dev\Debug;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\View\Requirements;
-use SilverStripe\Dev\Debug;
+use SilverStripe\Control\Director;
 
 class CalendarPageController extends PageController
 {
@@ -32,9 +25,9 @@ class CalendarPageController extends PageController
     ];
 
     private static $url_handlers = [
-        'event//$URLSegment' => 'viewEvent',
         'event//$URLSegment/$Date/$Time' => 'viewOccurence',
         'event//$URLSegment/$Date' => 'viewOccurence',
+        'event//$URLSegment' => 'viewEvent',
         'date//$Year!/$Month/$Day' => 'handleDateSegments',
         'range//$Start/$End' => 'handleDateRange',
         'search//$Query!' => 'handleSearch',
@@ -44,7 +37,6 @@ class CalendarPageController extends PageController
 
     public function index(HTTPRequest $r)
     {
-
         $skip = ($r->getVar('skip') ? intval($r->getVar('skip')) : 0);
         $eventDateTimes = $this->getAllEvents($skip);
         return $this->customise([
@@ -52,26 +44,34 @@ class CalendarPageController extends PageController
         ])->renderWith(['CalendarPage', 'Page']);
     }
 
+    public function getCurrentPageURL() {
+        $pageURL = 'http';
+        if (Director::protocol() == 'https') {$pageURL .= "s";}
+        $pageURL .= "://";
+        if ($_SERVER["SERVER_PORT"] != "80") {
+            $pageURL .= $_SERVER["SERVER_NAME"].":".$_SERVER["SERVER_PORT"].$_SERVER["REQUEST_URI"];
+        } else {
+            $pageURL .= $_SERVER["SERVER_NAME"].$_SERVER["REQUEST_URI"];
+        }
+        return $pageURL;
+    }
+
     public function viewOccurence(HTTPRequest $r){
         $url_segment = $r->param('URLSegment');
         $date = $r->param('Date');
         $time = $r->param('Time');
 
-        Debug::show('oocc');
-//        Debug::show(HTTPRequest);
-
         $event = $this->getEventByURLSegment($url_segment);
-
         if (!$event) {
             return $this->httpError(404, 'Event not found');
         }
 
         $urlTime = ($time != NULL ? substr($time, 0, 2) . ':' . substr($time, 2, 2) . ':00' : NULL);
 
-        $event_datetime = $event->getDateTime($date, $urlTime);
 
-//        Debug::show($event_datetime);
-//        die();
+//        Debug::show($date);
+//        Debug::show($urlTime);
+        $event_datetime = $event->getDateTime($date, $urlTime);
 
         if (!$event_datetime) {
             return $this->httpError(404, 'Event datetime not found');
@@ -80,16 +80,12 @@ class CalendarPageController extends PageController
         return $this->customise([
             'Event' => $event,
             'EventDateTime' => $event_datetime,
-            'MetaTitle' => $event->Title
+            'MetaTitle' => $event->Title,
+            'BackURL' => $this->getCurrentPageURL()
         ])->renderWith(['CalendarPage_event', 'Page']);
     }
 
     public function viewEvent(HTTPRequest $r){
-
-        $form = '';
-
-        $this->extend('getForm', $form);
-
         $get_vars = $r->getVars();
         $url_segment = $r->param('URLSegment');
         $date = $date_times = null;
@@ -111,9 +107,8 @@ class CalendarPageController extends PageController
         return $this->customise([
             'Event' => $event,
             'Date' => $date,
-            'DateTimes' => $date_times,
-            'ContactForm' => $form
-        ])->renderWith(['CalendarPage_event', 'Page']);
+            'DateTimes' => $date_times
+        ])->renderWith(['EventViewPage', 'Page']);
     }
 
     //calendar-page/search/query?StartDate=YYYYMMDD&EndDate=YYYYMMDD
@@ -135,6 +130,7 @@ class CalendarPageController extends PageController
     }
 
     public function handlePeriod(HTTPRequest $r){
+
         $Period = $r->param('Period');
         $allowed_values = ['day', 'week', 'month'];
 
