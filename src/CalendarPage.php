@@ -52,7 +52,7 @@ class CalendarPage extends SiteTree
         if(empty($event_ids)) return [];
 
         $eventDateTimes =  EventDateTime::get()
-            ->filter(['EventID' => $event_ids])
+            ->filter(['EventID' => $event_ids, 'StartDate:GreaterThanOrEqual' => date('Y-m-d')])
             ->sort(['StartDate' => 'ASC', 'StartTime' => 'ASC']);
 
 //        Debug::show($eventDateTimes->count());
