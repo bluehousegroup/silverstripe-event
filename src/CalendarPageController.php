@@ -38,7 +38,7 @@ class CalendarPageController extends PageController
         'date//$Year!/$Month/$Day' => 'handleDateSegments',
         'range//$Start/$End' => 'handleDateRange',
         'search//$Query!' => 'handleSearch',
-        '$Period!' => 'handlePeriod',
+        'period/$Period!' => 'handlePeriod',
         '' => 'index'
     ];
 
