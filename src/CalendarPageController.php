@@ -4,13 +4,12 @@ namespace BluehouseGroup\Event;
 use PageController;
 use SilverStripe\ORM\ArrayList;
 use SilverStripe\View\ArrayData;
-
 use SilverStripe\ORM\DataList;
-
 use SilverStripe\ORM\Map;
-
+use SilverStripe\Dev\Debug;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\View\Requirements;
+use SilverStripe\Control\Director;
 
 class CalendarPageController extends PageController
 {
@@ -32,7 +31,7 @@ class CalendarPageController extends PageController
         'date//$Year!/$Month/$Day' => 'handleDateSegments',
         'range//$Start/$End' => 'handleDateRange',
         'search//$Query!' => 'handleSearch',
-        '$Period!' => 'handlePeriod',
+        'period/$Period!' => 'handlePeriod',
         '' => 'index'
     ];
 
@@ -43,6 +42,18 @@ class CalendarPageController extends PageController
         return $this->customise([
             'EventDateTimes' => $eventDateTimes
         ])->renderWith(['CalendarPage', 'Page']);
+    }
+
+    public function getCurrentPageURL() {
+        $pageURL = 'http';
+        if (Director::protocol() == 'https') {$pageURL .= "s";}
+        $pageURL .= "://";
+        if ($_SERVER["SERVER_PORT"] != "80") {
+            $pageURL .= $_SERVER["SERVER_NAME"].":".$_SERVER["SERVER_PORT"].$_SERVER["REQUEST_URI"];
+        } else {
+            $pageURL .= $_SERVER["SERVER_NAME"].$_SERVER["REQUEST_URI"];
+        }
+        return $pageURL;
     }
 
     public function viewOccurence(HTTPRequest $r){
@@ -57,6 +68,9 @@ class CalendarPageController extends PageController
 
         $urlTime = ($time != NULL ? substr($time, 0, 2) . ':' . substr($time, 2, 2) . ':00' : NULL);
 
+
+//        Debug::show($date);
+//        Debug::show($urlTime);
         $event_datetime = $event->getDateTime($date, $urlTime);
 
         if (!$event_datetime) {
@@ -66,7 +80,8 @@ class CalendarPageController extends PageController
         return $this->customise([
             'Event' => $event,
             'EventDateTime' => $event_datetime,
-            'MetaTitle' => $event->Title
+            'MetaTitle' => $event->Title,
+            'BackURL' => $this->getCurrentPageURL()
         ])->renderWith(['CalendarPage_event', 'Page']);
     }
 
@@ -81,19 +96,19 @@ class CalendarPageController extends PageController
         }
 
         if (isset($get_vars['date'])) {
-          $date = $get_vars['date'];
-          $date_times = $event->getDateTimes($date);
+            $date = $get_vars['date'];
+            $date_times = $event->getDateTimes($date);
 
-          if (empty($date_times->toArray())) {
-              $date = null;
-          }
+            if (empty($date_times->toArray())) {
+                $date = null;
+            }
         }
 
         return $this->customise([
             'Event' => $event,
             'Date' => $date,
             'DateTimes' => $date_times
-        ])->renderWith(['CalendarPage_event', 'Page']);
+        ])->renderWith(['EventViewPage', 'Page']);
     }
 
     //calendar-page/search/query?StartDate=YYYYMMDD&EndDate=YYYYMMDD
@@ -115,6 +130,8 @@ class CalendarPageController extends PageController
     }
 
     public function handlePeriod(HTTPRequest $r){
+
+        Debug::show('ahadnawepoeriosdfdf');
         $Period = $r->param('Period');
         $allowed_values = ['day', 'week', 'month'];
 
