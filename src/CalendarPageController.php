@@ -56,7 +56,8 @@ class CalendarPageController extends PageController
         return $pageURL;
     }
 
-    public function viewOccurence(HTTPRequest $r){
+    public function viewOccurence(HTTPRequest $r)
+    {
         $url_segment = $r->param('URLSegment');
         $date = $r->param('Date');
         $time = $r->param('Time');
@@ -77,15 +78,20 @@ class CalendarPageController extends PageController
             return $this->httpError(404, 'Event datetime not found');
         }
 
-        return $this->customise([
+        $data = $this->customise([
             'Event' => $event,
             'EventDateTime' => $event_datetime,
             'MetaTitle' => $event->Title,
-            'BackURL' => $this->getCurrentPageURL()
-        ])->renderWith(['CalendarPage_event', 'Page']);
+            'BackURL' => $this->getCurrentPageURL(),
+        ]);
+
+        $this->extend('onBeforeOccurrenceRender', $data);
+
+        return $data->renderWith(['CalendarPage_event', 'Page']);
     }
 
-    public function viewEvent(HTTPRequest $r){
+    public function viewEvent(HTTPRequest $r)
+    {
         $get_vars = $r->getVars();
         $url_segment = $r->param('URLSegment');
         $date = $date_times = null;
@@ -104,11 +110,15 @@ class CalendarPageController extends PageController
             }
         }
 
-        return $this->customise([
+        $data = $this->customise([
             'Event' => $event,
             'Date' => $date,
             'DateTimes' => $date_times
-        ])->renderWith(['EventViewPage', 'Page']);
+        ]);
+
+        $this->extend('onBeforeEventRender', $data);
+
+        return $data->renderWith(['EventViewPage', 'Page']);
     }
 
     //calendar-page/search/query?StartDate=YYYYMMDD&EndDate=YYYYMMDD
