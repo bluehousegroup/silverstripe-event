@@ -44,7 +44,7 @@ class EventDateTime extends DataObject
 
     public function populateDefaults()
     {
-        $today = date('m/d/Y');
+        $today = date('Y-m-d');
         $this->StartDate = $today;
         $this->EndDate = $today;
         $this->StartTime = '3:00 PM';
