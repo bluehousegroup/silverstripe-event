@@ -110,7 +110,7 @@ class EventDateTime extends DataObject
     public function Link($action = null)
     {
 
-        $controller = CalendarPage::get()->filter(['ID' => $this->Event->CalendarID])->first();
+        $controller = CalendarPage::get()->first();
 
         $urlsegment_with_date = $this->Event->URLSegment . '/' . $this->StartDate;
 
