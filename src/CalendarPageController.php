@@ -21,12 +21,12 @@ class CalendarPageController extends PageController
         'handleDateRange',
         'handleSearch',
         'viewEvent',
-        'viewOccurence'
+        'viewOccurrence'
     ];
 
     private static $url_handlers = [
-        'event//$URLSegment/$Date/$Time' => 'viewOccurence',
-        'event//$URLSegment/$Date' => 'viewOccurence',
+        'event//$URLSegment/$Date/$Time' => 'viewOccurrence',
+        'event//$URLSegment/$Date' => 'viewOccurrence',
         'event//$URLSegment' => 'viewEvent',
         'date//$Year!/$Month/$Day' => 'handleDateSegments',
         'range//$Start/$End' => 'handleDateRange',
@@ -56,7 +56,7 @@ class CalendarPageController extends PageController
         return $pageURL;
     }
 
-    public function viewOccurence(HTTPRequest $r)
+    public function viewOccurrence(HTTPRequest $r)
     {
         $url_segment = $r->param('URLSegment');
         $date = $r->param('Date');
