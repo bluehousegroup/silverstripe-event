@@ -114,6 +114,16 @@ class Event extends DataObject
 
     }
 
+    public function onAfterDelete()
+    {
+        parent::onAfterDelete();
+
+        // Also delete related EventDateTime records to prevent them from being orphaned
+        foreach ($this->EventDateTimes() as $eventdatetime) {
+            $eventdatetime->delete();
+        }
+    }
+
     public function generateURLSegment($title)
     {
         $filter = URLSegmentFilter::create();
