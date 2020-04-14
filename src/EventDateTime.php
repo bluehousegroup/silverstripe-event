@@ -61,22 +61,22 @@ class EventDateTime extends DataObject
 
         $result = parent::validate();
 
-        if ($this->StartTime && $this->EndTime) {
-            $startTime = date("$this->StartDate $this->StartTime");
-            $endTime = ($this->EndDate ? "$this->EndDate $this->EndTime" : "$this->StartDate $this->EndTime");
-            if ($endTime < $startTime) {
-                $result->addError('Invalid Time Range: You must select an End Time after Start Time');
-                return $result;
-            }
-        }
-
-        if ($this->EndDate) {
-            $startDate = date($this->StartDate);
-            $endDate = date($this->EndDate);
-            if ($endDate < $startDate) {
-                $result->addError('Invalid Date Range: You must select an End Date after Start Date');
-            }
-        }
+        // if ($this->StartTime && $this->EndTime) {
+        //     $startTime = date("$this->StartDate $this->StartTime");
+        //     $endTime = ($this->EndDate ? "$this->EndDate $this->EndTime" : "$this->StartDate $this->EndTime");
+        //     if ($endTime < $startTime) {
+        //         $result->addError('Invalid Time Range: You must select an End Time after Start Time');
+        //         return $result;
+        //     }
+        // }
+        //
+        // if ($this->EndDate) {
+        //     $startDate = date($this->StartDate);
+        //     $endDate = date($this->EndDate);
+        //     if ($endDate < $startDate) {
+        //         $result->addError('Invalid Date Range: You must select an End Date after Start Date');
+        //     }
+        // }
 
         $filter = [
             'EventID' => $this->Event->ID,
