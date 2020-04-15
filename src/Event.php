@@ -56,7 +56,7 @@ class Event extends DataObject
         'Description'
     ];
 
-    private static $default_sort = 'Title DESC';
+    private static $default_sort = 'Title ASC';
 
     public function getStartTimeSummary()
     {
