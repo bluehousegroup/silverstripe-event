@@ -56,6 +56,8 @@ class EventDateTime extends DataObject
         'Event' => Event::class,
     ];
 
+    private static $default_sort = 'StartDate DESC, StartTime DESC';
+
     public function validate()
     {
 

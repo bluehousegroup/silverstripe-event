@@ -56,6 +56,8 @@ class Event extends DataObject
         'Description'
     ];
 
+    private static $default_sort = 'Title DESC';
+
     public function getStartTimeSummary()
     {
         $date = $this->EventDateTimes()->sort([
