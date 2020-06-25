@@ -195,30 +195,32 @@ class Event extends DataObject
                         'URLSegment',
                         'URL Segment'
                     )->setURLPrefix($this->BaseLink()),
-                    HTMLEditorField::create('Description',_t(__CLASS__ . '.DESCRIPTION', 'Description')),
-                    GridField::create(
-                        'EventDateTimes',
-                        _t(__CLASS__ . '.EventDateTimes', 'Occurrences'),
-                        $this->EventDateTimes(),
-                        $event_date_times_config = GridFieldConfig_RelationEditor::create()
-                    )
+                    HTMLEditorField::create('Description',_t(__CLASS__ . '.DESCRIPTION', 'Description'))
                 )
             )
         );
+        
+        if ($this->exists()) {
+            $fields->addFieldToTab(
+                'Root.Occurrences',
+                GridField::create(
+                    'EventDateTimes',
+                    _t(__CLASS__ . '.EventDateTimes', 'Occurrences'),
+                    $this->EventDateTimes(),
+                    $event_date_times_config = GridFieldConfig_RecordEditor::create()
+                )
+            );
 
-        $event_date_times_config->getComponentByType(
-            GridFieldDataColumns::class
-        )->setDisplayFields	([
-            'StartDate.nice' => 'Start Date',
-            'StartTime.nice' => 'Start Time',
-            'EndDate.nice' => 'End Date',
-            'EndTime.nice' => 'End Time',
-            'AllDay.nice' => 'All Day'
-        ]);
-
-        $event_date_times_config->removeComponentsByType(
-            GridFieldAddExistingAutocompleter::class
-        );
+            $event_date_times_config->getComponentByType(
+                GridFieldDataColumns::class
+            )->setDisplayFields	([
+                'StartDate.nice' => 'Start Date',
+                'StartTime.nice' => 'Start Time',
+                'EndDate.nice' => 'End Date',
+                'EndTime.nice' => 'End Time',
+                'AllDay.nice' => 'All Day'
+            ]);
+        }
 
         $this->extend('updateCMSFields', $fields);
 
